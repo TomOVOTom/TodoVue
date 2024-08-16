@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>待办事项列表</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        #app {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            padding: 30px;
+            width: 600px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            font-size: 28px;
+            margin-bottom: 30px;
+        }
+        .input-group {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        input[type="text"], select {
+            flex: 1;
+            padding: 12px;
+            margin-right: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+        button {
+            padding: 12px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .filter-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .filter-buttons button {
+            flex: 1;
+            margin: 0 5px;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        li {
+            background-color: #f9f9f9;
+            margin-bottom: 15px;
+            padding: 20px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .todo-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+        }
+        .todo-text {
+            margin-left: 10px;
+            font-size: 18px;
+        }
+        .completed {
+            text-decoration: line-through;
+            color: #888;
+        }
+        .priority-high { color: #ff4d4d; }
+        .priority-medium { color: #ffa64d; }
+        .priority-low { color: #4da6ff; }
+        .todo-actions button {
+            margin-left: 10px;
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>待办事项列表</h1>
+        <div class="input-group">
+            <input type="text" v-model="newTodo" placeholder="添加新任务" @keyup.enter="addTodo">
+            <select v-model="newTodoPriority">
+                <option value="低">低</option>
+                <option value="中">中</option>
+                <option value="高">高</option>
+            </select>
+            <button @click="addTodo">添加</button>
+        </div>
+        <div class="filter-buttons">
+            <button @click="filter = 'all'">全部</button>
+            <button @click="filter = 'active'">未完成</button>
+            <button @click="filter = 'completed'">已完成</button>
+        </div>
+        <ul>
+            <li v-for="(todo, index) in filteredTodos" :key="index">
+                <div class="todo-content">
+                    <input type="checkbox" v-model="todo.completed" @change="saveTodos">
+                    <span class="todo-text" :class="{ completed: todo.completed, 'priority-high': todo.priority === '高', 'priority-medium': todo.priority === '中', 'priority-low': todo.priority === '低' }">
+                        {{ todo.text }} (优先级: {{ todo.priority }})
+                    </span>
+                </div>
+                <div class="todo-actions">
+                    <button @click="editTodo(index)">编辑</button>
+                    <button @click="removeTodo(index)">删除</button>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                newTodo: '',
+            newTodoPriority: '中',
+            todos: [],
+            filter: 'all'
+        },
+        computed: {
+            filteredTodos() {
+                if (this.filter === 'active') {
+                    return this.todos.filter(todo => !todo.completed);
+                } else if (this.filter === 'completed') {
+                    return this.todos.filter(todo => todo.completed);
+                }
+                return this.todos;
+            }
+            },
+            mounted() {
+                const storedTodos = localStorage.getItem('todos');
+                if (storedTodos) {
+                    this.todos = JSON.parse(storedTodos);
+                }
+            },
+            methods: {
+                addTodo: function() {
+                    if (this.newTodo.trim() !== '') {
+                    this.todos.push({
+                        text: this.newTodo.trim(),
+                        completed: false,
+                        priority: this.newTodoPriority
+                    });
+                        this.newTodo = '';
+                    this.newTodoPriority = '中';
+                    this.saveTodos();
+                    }
+                },
+                removeTodo: function(index) {
+                    this.todos.splice(index, 1);
+                this.saveTodos();
+            },
+            editTodo: function(index) {
+                const newText = prompt('编辑任务', this.todos[index].text);
+                if (newText !== null) {
+                    this.todos[index].text = newText.trim();
+                    this.saveTodos();
+                }
+            },
+            saveTodos: function() {
+                localStorage.setItem('todos', JSON.stringify(this.todos));
+                }
+            }
+        });
+    </script>
+</body>
+</html>
